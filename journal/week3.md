@@ -1,5 +1,4 @@
 # Week 3 — Decentralized Authentication
-# Week 3 — Decentralized Authentication
 
 ## Install AWS Amplify
 
