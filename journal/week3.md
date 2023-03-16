@@ -372,6 +372,17 @@ cors = CORS(
 )
 ```
 
+Testing the recovery and sign in and sign up pages
+
+1.![confirmation code](https://user-images.githubusercontent.com/127143210/225679062-cef949f7-5d0a-4ac2-aca2-4a68beb4d471.png)
+
+2.![password reset](https://user-images.githubusercontent.com/127143210/225680650-42a677b9-05eb-4787-83de-8de35c4ddbfc.png)
+
+
+
+https://user-images.githubusercontent.com/127143210/225699113-b881fc54-3bff-4404-899b-c53661d3608d.mp4
+
+
 add the `Flask-AWSCognito` to the requirement.txt of the backend file and run a 
 
 `pip installl-r requirements.txt`
