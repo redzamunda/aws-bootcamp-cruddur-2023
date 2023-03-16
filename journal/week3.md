@@ -325,7 +325,6 @@ import { Auth } from 'aws-amplify';
 ```
 
 ```
-
 const onsubmit_send_code = async (event) => {
   event.preventDefault();
   setErrors('')
@@ -348,7 +347,17 @@ const onsubmit_confirm_code = async (event) => {
   return false
 }
 
-## Authenticating Server Side
+```
+
+### set up user for user pool on the cli from your terminal 
+
+$ aws cognito-idp admin-set-user-password \
+ --user-pool-id <your-user-pool-id> \
+ --username <username> \
+ --password <password> \
+ --permanent
+
+### Authenticating Server Side
 
 Add in the `HomeFeedPage.js` a header to pass along the access token
 
@@ -357,6 +366,31 @@ Add in the `HomeFeedPage.js` a header to pass along the access token
     Authorization: `Bearer ${localStorage.getItem("access_token")}`
   }
 ```
+
+
+
+Testing the recovery and sign in and sign up pages
+
+1.![confirmation code](https://user-images.githubusercontent.com/127143210/225679062-cef949f7-5d0a-4ac2-aca2-4a68beb4d471.png)
+
+2.![password reset](https://user-images.githubusercontent.com/127143210/225680650-42a677b9-05eb-4787-83de-8de35c4ddbfc.png)
+
+
+![mary-ejike sign in](https://user-images.githubusercontent.com/127143210/225701498-ff21f05a-1374-4fba-a155-eb716d2b3939.png)
+
+
+https://user-images.githubusercontent.com/127143210/225699113-b881fc54-3bff-4404-899b-c53661d3608d.mp4
+
+  
+## configure backend server
+  
+add the `Flask-AWSCognito` to the requirement.txt of the backend file and run a 
+
+`pip installl-r requirements.txt`
+
+create a user either from the command line or from the aws cognito page 
+ensure to put your a real gmail address and confirm the user 
+
 
 
 In the `app.py`
@@ -371,36 +405,163 @@ cors = CORS(
   methods="OPTIONS,GET,HEAD,POST"
 )
 ```
+  
+JWT authentication 
+  A. pls follow the intruction on the [video](https://www.youtube.com/watch?v=d079jccoG-M&list=PLBfufR7vyJJ7k25byhRXJldB5AiwgNnWv&index=42)
+ 
+  1.create a lib folder in the backend flask and inside it Create a new python file (cognito_jwt_token.py) 
+  ```
+  import time
+import requests
+from jose import jwk, jwt
+from jose.exceptions import JOSEError
+from jose.utils import base64url_decode
 
-Testing the recovery and sign in and sign up pages
+class FlaskAWSCognitoError(Exception):
+  pass
 
-1.![confirmation code](https://user-images.githubusercontent.com/127143210/225679062-cef949f7-5d0a-4ac2-aca2-4a68beb4d471.png)
+class TokenVerifyError(Exception):
+  pass
 
-2.![password reset](https://user-images.githubusercontent.com/127143210/225680650-42a677b9-05eb-4787-83de-8de35c4ddbfc.png)
+def extract_access_token(request_headers):
+    access_token = None
+    auth_header = request_headers.get("Authorization")
+    if auth_header and " " in auth_header:
+        _, access_token = auth_header.split()
+    return access_token
 
-![setting error detection](https://user-images.githubusercontent.com/127143210/225701321-d5bc506a-f476-4d2f-93a8-a2f2bb49bcf7.png)
-
-![s![mary-ejike sign in](https://user-images.githubusercontent.com/127143210/225701498-ff21f05a-1374-4fba-a155-eb716d2b3939.png)
-ign in successful](https://user-images.githubusercontent.com/127143210/225701088-d0c1519a-fb1b-4c3c-909a-10770c94910c.png)
-
-![user succesfully added](https://user-images.githubusercontent.com/127143210/225701395-1300c263-bf34-43f2-a9fd-b395e1d6682a.png)
-
-https://user-images.githubusercontent.com/127143210/225699113-b881fc54-3bff-4404-899b-c53661d3608d.mp4
-
-![ACTIVATION CODE SIDE](https://user-images.githubusercontent.com/127143210/225701320-49220f69-ff7a-4846-a7c9-d7d5e68e7fd1.png)
-
-add the `Flask-AWSCognito` to the requirement.txt of the backend file and run a 
-
-`pip installl-r requirements.txt`
-
-create a user either from the command line or from the aws cognito page 
-ensure to put your a real gmail address and confirm the user 
-
-### set up user for user pool on the cli from your terminal 
-$ aws cognito-idp admin-set-user-password \
- --user-pool-id <your-user-pool-id> \
- --username <username> \
- --password <password> \
- --permanent
+class CognitoJwtToken:
+    def __init__(self, user_pool_id, user_pool_client_id, region, request_client=None):
+        self.region = region
+        if not self.region:
+            raise FlaskAWSCognitoError("No AWS region provided")
+        self.user_pool_id = user_pool_id
+        self.user_pool_client_id = user_pool_client_id
+        self.claims = None
+        if not request_client:
+            self.request_client = requests.get
+        else:
+            self.request_client = request_client
+        self._load_jwk_keys()
 
 
+    def _load_jwk_keys(self):
+        keys_url = f"https://cognito-idp.{self.region}.amazonaws.com/{self.user_pool_id}/.well-known/jwks.json"
+        try:
+            response = self.request_client(keys_url)
+            self.jwk_keys = response.json()["keys"]
+        except requests.exceptions.RequestException as e:
+            raise FlaskAWSCognitoError(str(e)) from e
+
+    @staticmethod
+    def _extract_headers(token):
+        try:
+            headers = jwt.get_unverified_headers(token)
+            return headers
+        except JOSEError as e:
+            raise TokenVerifyError(str(e)) from e
+
+    def _find_pkey(self, headers):
+        kid = headers["kid"]
+        # search for the kid in the downloaded public keys
+        key_index = -1
+        for i in range(len(self.jwk_keys)):
+            if kid == self.jwk_keys[i]["kid"]:
+                key_index = i
+                break
+        if key_index == -1:
+            raise TokenVerifyError("Public key not found in jwks.json")
+        return self.jwk_keys[key_index]
+
+    @staticmethod
+    def _verify_signature(token, pkey_data):
+        try:
+            # construct the public key
+            public_key = jwk.construct(pkey_data)
+        except JOSEError as e:
+            raise TokenVerifyError(str(e)) from e
+        # get the last two sections of the token,
+        # message and signature (encoded in base64)
+        message, encoded_signature = str(token).rsplit(".", 1)
+        # decode the signature
+        decoded_signature = base64url_decode(encoded_signature.encode("utf-8"))
+        # verify the signature
+        if not public_key.verify(message.encode("utf8"), decoded_signature):
+            raise TokenVerifyError("Signature verification failed")
+
+    @staticmethod
+    def _extract_claims(token):
+        try:
+            claims = jwt.get_unverified_claims(token)
+            return claims
+        except JOSEError as e:
+            raise TokenVerifyError(str(e)) from e
+
+    @staticmethod
+    def _check_expiration(claims, current_time):
+        if not current_time:
+            current_time = time.time()
+        if current_time > claims["exp"]:
+            raise TokenVerifyError("Token is expired")  # probably another exception
+
+    def _check_audience(self, claims):
+        # and the Audience  (use claims['client_id'] if verifying an access token)
+        audience = claims["aud"] if "aud" in claims else claims["client_id"]
+        if audience != self.user_pool_client_id:
+            raise TokenVerifyError("Token was not issued for this audience")
+
+    def verify(self, token, current_time=None):
+        """ https://github.com/awslabs/aws-support-tools/blob/master/Cognito/decode-verify-jwt/decode-verify-jwt.py """
+        if not token:
+            raise TokenVerifyError("No token provided")
+
+        headers = self._extract_headers(token)
+        pkey_data = self._find_pkey(headers)
+        self._verify_signature(token, pkey_data)
+
+        claims = self._extract_claims(token)
+        self._check_expiration(claims, current_time)
+        self._check_audience(claims)
+
+        self.claims = claims 
+        return claims
+  ```
+  
+  In app.py,
+  
+  add 
+  ```
+from lib.cognito_jwt_token import CognitoJwtToken, extract_access_to
+  ```
+  after the app=flask(_name_)
+  add 
+  
+  ```
+  cognito_jwt_token = CognitoJwtToken(
+  user_pool_id=os.getenv("AWS_COGNITO_USER_POOL_ID"), 
+  user_pool_client_id=os.getenv("AWS_COGNITO_USER_POOL_CLIENT_ID"),
+  region=os.getenv("AWS_DEFAULT_REGION")
+)
+```
+  
+  at the api/activities/home method add this
+  ```
+  @app.route("/api/activities/home", methods=['GET'])
+@xray_recorder.capture('activities_home')
+def data_home():
+  access_token = extract_access_token(request.headers)
+  try:
+    claims = cognito_jwt_token.verify(access_token)
+    # authenicatied request
+    app.logger.debug("authenicated")
+    app.logger.debug(claims)
+    app.logger.debug(claims['username'])
+    data = HomeActivities.run(cognito_user_id=claims['username'])
+  except TokenVerifyError as e:
+    # unauthenicatied request
+    app.logger.debug(e)
+    app.logger.debug("unauthenicated")
+    data = HomeActivities.run()
+  return data, 200
+
+ ``` 
