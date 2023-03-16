@@ -1,10 +1,31 @@
 # Week 3 — Decentralized Authentication
 
+## Setup your Cognito User Pool
+1.sign in to your aws account. Aways avoid loginin from root user for security reasons
+2.find and open cognito from your search box
+3.open the cognito and make sure to check the region .Try to maintain a particular region for this bootcamp
+4.Create user pool
+Fill in the following:
+Cognito user pool sign-in options: Email click next
+Multi-factor authentication: No MFA .you can set this we only picked this to reduce cost click next .leave the defaults
+Required attributes (Additional required attributes): name, preferred_username
+Email : choose email with Cognito
+uncheck the use  aws cognito UI
+User pool name: name of choice
+App client name: name of choice
+5. review your configurations and with cognito user pools you cant edit once created you would have to create another if you make a mistake so remember to carefully pick what you need.click create 
+
+![user pool create](https://user-images.githubusercontent.com/127143210/225618345-c32e14d8-f9be-46aa-a887-2d0d160ed508.png)
+
+
 ## Install AWS Amplify
+cd into the frontend folder and run the command below
 
 ```sh
 npm i aws-amplify --save
 ```
+this adds the following to the gitpod.yml folder bacause of the --save added at the end
+
 
 ## Provision Cognito User Group
 
