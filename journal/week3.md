@@ -198,68 +198,20 @@ const signOut = async () => {
 }
 ```
 
-We'll rewrite `DesktopSidebar.js` so that it conditionally shows components in case you are logged in or not.
-
-```js
-import './DesktopSidebar.css';
-import Search from '../components/Search';
-import TrendingSection from '../components/TrendingsSection'
-import SuggestedUsersSection from '../components/SuggestedUsersSection'
-import JoinSection from '../components/JoinSection'
-
-export default function DesktopSidebar(props) {
-  const trendings = [
-    {"hashtag": "100DaysOfCloud", "count": 2053 },
-    {"hashtag": "CloudProject", "count": 8253 },
-    {"hashtag": "AWS", "count": 9053 },
-    {"hashtag": "FreeWillyReboot", "count": 7753 }
-  ]
-
-  const users = [
-    {"display_name": "Andrew Brown", "handle": "andrewbrown"}
-  ]
-
-  let trending;
-  if (props.user) {
-    trending = <TrendingSection trendings={trendings} />
-  }
-
-  let suggested;
-  if (props.user) {
-    suggested = <SuggestedUsersSection users={users} />
-  }
-  let join;
-  if (props.user) {
-  } else {
-    join = <JoinSection />
-  }
-
-  return (
-    <section>
-      <Search />
-      {trending}
-      {suggested}
-      {join}
-      <footer>
-        <a href="#">About</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Privacy Policy</a>
-      </footer>
-    </section>
-  );
-}
-```
 
 ##  Signin Page
+Replace the import under the // [TODO] Authenication 
 
 ```js
 import { Auth } from 'aws-amplify';
 ```
+Replace the onSubmit function with
+
 ```
-const [cognitoErrors, setCognitoErrors] = React.useState('');
+const [cognitoErrors, setErrors] = React.useState('');
 
 const onsubmit = async (event) => {
-  setCognitoErrors('')
+  setErrors('')
   event.preventDefault();
   try {
     Auth.signIn(username, password)
@@ -272,7 +224,7 @@ const onsubmit = async (event) => {
     if (error.code == 'UserNotConfirmedException') {
       window.location.href = "/confirm"
     }
-    setCognitoErrors(error.message)
+    setErrors(error.message)
   }
   return false
 }
@@ -287,15 +239,19 @@ if (cognitoErrors){
 ```
 
 ## Signup Page
-
+Replace the import under the // [TODO] Authenication 
 ```js
 import { Auth } from 'aws-amplify';
+```
+Replace the signOut method 
 
-const [cognitoErrors, setCognitoErrors] = React.useState('');
+```
+
+const [cognitoErrors, setErrors] = React.useState('');
 
 const onsubmit = async (event) => {
   event.preventDefault();
-  setCognitoErrors('')
+  setErrors('')
   try {
       const { user } = await Auth.signUp({
         username: email,
@@ -313,7 +269,7 @@ const onsubmit = async (event) => {
       window.location.href = `/confirm?email=${email}`
   } catch (error) {
       console.log(error);
-      setCognitoErrors(error.message)
+      setErrors(error.message)
   }
   return false
 }
@@ -331,7 +287,7 @@ if (cognitoErrors){
 
 ```js
 const resend_code = async (event) => {
-  setCognitoErrors('')
+  setErrors('')
   try {
     await Auth.resendSignUp(email);
     console.log('code resent successfully');
@@ -356,7 +312,7 @@ const onsubmit = async (event) => {
     await Auth.confirmSignUp(email, code);
     window.location.href = "/"
   } catch (error) {
-    setCognitoErrors(error.message)
+    setErrors(error.message)
   }
   return false
 }
@@ -372,7 +328,7 @@ import { Auth } from 'aws-amplify';
 
 const onsubmit_send_code = async (event) => {
   event.preventDefault();
-  setCognitoErrors('')
+  setErrors('')
   Auth.forgotPassword(username)
   .then((data) => setFormState('confirm_code') )
   .catch((err) => setCognitoErrors(err.message) );
@@ -387,7 +343,7 @@ const onsubmit_confirm_code = async (event) => {
     .then((data) => setFormState('success'))
     .catch((err) => setCognitoErrors(err.message) );
   } else {
-    setCognitoErrors('Passwords do not match')
+    setErrors('Passwords do not match')
   }
   return false
 }
@@ -402,6 +358,7 @@ Add in the `HomeFeedPage.js` a header to pass along the access token
   }
 ```
 
+
 In the `app.py`
 change the cors to this
 
@@ -414,12 +371,19 @@ cors = CORS(
   methods="OPTIONS,GET,HEAD,POST"
 )
 ```
-add the Flask-AWSCognito to the requirement.txt of the backend file and run a 
+
+add the `Flask-AWSCognito` to the requirement.txt of the backend file and run a 
 
 `pip installl-r requirements.txt`
 
+create a user either from the command line or from the aws cognito page 
+ensure to put your a real gmail address and confirm the user 
+
+### set up user for user pool on the cli from your terminal 
+$ aws cognito-idp admin-set-user-password \
+ --user-pool-id <your-user-pool-id> \
+ --username <username> \
+ --password <password> \
+ --permanent
 
 
-## Provision Cognito User Group
-
-Using the AWS Console we'll create a Cognito User Group
