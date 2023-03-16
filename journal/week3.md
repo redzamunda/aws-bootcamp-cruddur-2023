@@ -378,10 +378,16 @@ Testing the recovery and sign in and sign up pages
 
 2.![password reset](https://user-images.githubusercontent.com/127143210/225680650-42a677b9-05eb-4787-83de-8de35c4ddbfc.png)
 
+![setting error detection](https://user-images.githubusercontent.com/127143210/225701321-d5bc506a-f476-4d2f-93a8-a2f2bb49bcf7.png)
 
+![s![mary-ejike sign in](https://user-images.githubusercontent.com/127143210/225701498-ff21f05a-1374-4fba-a155-eb716d2b3939.png)
+ign in successful](https://user-images.githubusercontent.com/127143210/225701088-d0c1519a-fb1b-4c3c-909a-10770c94910c.png)
+
+![user succesfully added](https://user-images.githubusercontent.com/127143210/225701395-1300c263-bf34-43f2-a9fd-b395e1d6682a.png)
 
 https://user-images.githubusercontent.com/127143210/225699113-b881fc54-3bff-4404-899b-c53661d3608d.mp4
 
+![ACTIVATION CODE SIDE](https://user-images.githubusercontent.com/127143210/225701320-49220f69-ff7a-4846-a7c9-d7d5e68e7fd1.png)
 
 add the `Flask-AWSCognito` to the requirement.txt of the backend file and run a 
 
