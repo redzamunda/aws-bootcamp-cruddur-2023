@@ -11,6 +11,7 @@
 4.Create user pool
 
 Fill in the following:
+
 Cognito user pool sign-in options: Email click next
 
 Multi-factor authentication: No MFA .you can set this we only picked this to reduce cost click next .leave the defaults
@@ -36,12 +37,9 @@ cd into the frontend folder and run the command below
 ```sh
 npm i aws-amplify --save
 ```
-this adds the following to the gitpod.yml folder bacause of the --save added at the end
+this adds  `"aws-amplify"` to the  package.json folder bacause of the --save added at the end
 
 
-## Provision Cognito User Group
-
-Using the AWS Console we'll create a Cognito User Group
 
 ## Configure Amplify
 
@@ -49,10 +47,12 @@ We need to hook up our cognito pool to our code in the `App.js`
 
 ```js
 import { Amplify } from 'aws-amplify';
+```
 
+make sure to add this below the imports
+```js
 Amplify.configure({
-  "AWS_PROJECT_REGION": process.env.REACT_AWS_PROJECT_REGION,
-  "aws_cognito_identity_pool_id": process.env.REACT_APP_AWS_COGNITO_IDENTITY_POOL_ID,
+  "AWS_PROJECT_REGION": process.env.REACT_APP_AWS_PROJECT_REGION,
   "aws_cognito_region": process.env.REACT_APP_AWS_COGNITO_REGION,
   "aws_user_pools_id": process.env.REACT_APP_AWS_USER_POOLS_ID,
   "aws_user_pools_web_client_id": process.env.REACT_APP_CLIENT_ID,
@@ -60,11 +60,20 @@ Amplify.configure({
   Auth: {
     // We are not using an Identity Pool
     // identityPoolId: process.env.REACT_APP_IDENTITY_POOL_ID, // REQUIRED - Amazon Cognito Identity Pool ID
-    region: process.env.REACT_AWS_PROJECT_REGION,           // REQUIRED - Amazon Cognito Region
+    region: process.env.REACT_APP_AWS_PROJECT_REGION,           // REQUIRED - Amazon Cognito Region
     userPoolId: process.env.REACT_APP_AWS_USER_POOLS_ID,         // OPTIONAL - Amazon Cognito User Pool ID
     userPoolWebClientId: process.env.REACT_APP_CLIENT_ID,   // OPTIONAL - Amazon Cognito web Client ID (26-char alphanumeric string)
   }
 });
+```
+
+define the following in your docker file under the frontend-react-js.also go to your user pool in aws click on it find the app integrations to copy your app client id
+
+```
+REACT_APP_AWS_PROJECT_REGION:"${AWS_DEFAULT_REGION}"
+REACT_APP_AWS_COGNITO_REGION:"${AWS_DEFAULT_REGION"
+REACT_APP_AWS_USER_POOLS_ID:" insert your user pool id"
+REACT_APP_CLIENT_ID:"insert your app client id"
 ```
 
 ## Conditionally show components based on logged in or logged out
@@ -73,10 +82,12 @@ Inside our `HomeFeedPage.js`
 
 ```js
 import { Auth } from 'aws-amplify';
+```
 
-// set a state
-const [user, setUser] = React.useState(null);
+add this below 
 
+replace the checkAuth function with
+```
 // check if we are authenicated
 const checkAuth = async () => {
   Auth.currentAuthenticatedUser({
@@ -175,7 +186,8 @@ We'll update `ProfileInfo.js`
 
 ```js
 import { Auth } from 'aws-amplify';
-
+```
+```
 const signOut = async () => {
   try {
       await Auth.signOut({ global: true });
@@ -238,11 +250,12 @@ export default function DesktopSidebar(props) {
 }
 ```
 
-## Signin Page
+##  Signin Page
 
 ```js
 import { Auth } from 'aws-amplify';
-
+```
+```
 const [cognitoErrors, setCognitoErrors] = React.useState('');
 
 const onsubmit = async (event) => {
@@ -353,6 +366,9 @@ const onsubmit = async (event) => {
 
 ```js
 import { Auth } from 'aws-amplify';
+```
+
+```
 
 const onsubmit_send_code = async (event) => {
   event.preventDefault();
@@ -378,7 +394,7 @@ const onsubmit_confirm_code = async (event) => {
 
 ## Authenticating Server Side
 
-Add in the `HomeFeedPage.js` a header eto pass along the access token
+Add in the `HomeFeedPage.js` a header to pass along the access token
 
 ```js
   headers: {
@@ -387,6 +403,7 @@ Add in the `HomeFeedPage.js` a header eto pass along the access token
 ```
 
 In the `app.py`
+change the cors to this
 
 ```py
 cors = CORS(
@@ -397,3 +414,12 @@ cors = CORS(
   methods="OPTIONS,GET,HEAD,POST"
 )
 ```
+add the Flask-AWSCognito to the requirement.txt of the backend file and run a 
+
+`pip installl-r requirements.txt`
+
+
+
+## Provision Cognito User Group
+
+Using the AWS Console we'll create a Cognito User Group
